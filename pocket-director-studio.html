@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Pocket Director Studio 🎬</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#101116;
+    --ink-800:#1b1d24;
+    --ink-700:#25272f;
+    --ink-600:#32353f;
+    --paper:#f3efe4;
+    --paper-dim:#c9c5b8;
+    --yellow:#ffc82c;
+    --yellow-dim:#8a6c15;
+    --red:#e8483a;
+    --red-dim:#7a2620;
+    --green-on:#4fd67a;
+    --font-display:'Anton', 'Arial Narrow', sans-serif;
+    --font-body:'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+    --radius:14px;
+    --stripe: repeating-linear-gradient(-45deg, var(--yellow) 0 22px, var(--ink-900) 22px 44px);
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; overscroll-behavior:none; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #24262f 0%, transparent 60%),
+      var(--ink-900);
+    color:var(--paper);
+    font-family:var(--font-body);
+    min-height:100dvh;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  ::selection{ background:var(--yellow); color:var(--ink-900); }
+
+  button{ font-family:var(--font-body); cursor:pointer; -webkit-user-select:none; user-select:none; }
+  input, textarea{ font-family:var(--font-body); }
+
+  /* ---------- HEADER / SLATE BAR ---------- */
+  .slate-bar{
+    position:relative;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--ink-800);
+    border:1px solid var(--ink-600);
+    display:flex;
+    align-items:stretch;
+    min-height:64px;
+  }
+  .slate-bar::before{
+    content:"";
+    width:34px;
+    flex:0 0 34px;
+    background:var(--stripe);
+  }
+  .slate-bar::after{
+    content:"";
+    width:34px;
+    flex:0 0 34px;
+    background:var(--stripe);
+  }
+  .slate-bar .title-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:8px 14px;
+  }
+  .slate-bar h1{
+    font-family:var(--font-display);
+    font-weight:400;
+    letter-spacing:1.5px;
+    font-size:clamp(20px,3vw,30px);
+    margin:0;
+    color:var(--paper);
+    text-transform:uppercase;
+  }
+  .slate-bar .subtitle{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--yellow);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .slate-bar .badge{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--ink-900);
+    background:var(--yellow);
+    padding:5px 10px;
+    border-radius:999px;
+    font-weight:700;
+    align-self:center;
+    white-space:nowrap;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .stage{
+    flex:1;
+    display:grid;
+    grid-template-columns: 1.1fr 1.4fr 0.9fr;
+    grid-template-areas: "ciak camera diario";
+    gap:14px;
+    min-height:0;
+  }
+  @media (max-width: 980px){
+    .stage{
+      grid-template-columns: 1fr;
+      grid-template-areas: "ciak" "camera" "diario";
+      overflow-y:auto;
+    }
+  }
+
+  .panel{
+    background:var(--ink-800);
+    border:1px solid var(--ink-600);
+    border-radius:var(--radius);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .panel-head .chip{
+    width:26px; height:26px; border-radius:6px;
+    background:var(--stripe);
+    flex:0 0 26px;
+  }
+  .panel-head h2{
+    font-family:var(--font-display);
+    font-weight:400;
+    letter-spacing:0.5px;
+    font-size:17px;
+    text-transform:uppercase;
+    margin:0;
+    color:var(--paper);
+  }
+  .panel-head .hint{
+    margin-left:auto;
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--paper-dim);
+  }
+
+  /* ---------- CIAK PANEL ---------- */
+  #panel-ciak{ grid-area:ciak; }
+  .field{ margin-bottom:10px; }
+  .field label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--yellow);
+    margin-bottom:5px;
+  }
+  .field input{
+    width:100%;
+    background:var(--ink-700);
+    border:1px solid var(--ink-600);
+    color:var(--paper);
+    padding:11px 12px;
+    border-radius:9px;
+    font-size:15px;
+    outline:none;
+  }
+  .field input:focus{ border-color:var(--yellow); }
+
+  .clap-stage{
+    position:relative;
+    margin-top:6px;
+    background:var(--ink-900);
+    border-radius:12px;
+    border:1px solid var(--ink-600);
+    padding:16px 12px 10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    flex:1;
+    justify-content:center;
+    min-height:150px;
+  }
+  .clapboard{ width:100%; max-width:220px; }
+  .clap-top{
+    transform-origin: 8% 92%;
+    transition: transform .09s cubic-bezier(.2,.8,.3,1);
+  }
+  .clap-stage.snap .clap-top{ transform: rotate(-32deg); }
+  .clap-stage.recover .clap-top{ transition: transform .35s ease-out; transform: rotate(0deg); }
+
+  .clap-readout{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--paper-dim);
+    text-align:center;
+    min-height:16px;
+  }
+  .clap-readout b{ color:var(--yellow); }
+
+  .btn-clap{
+    width:100%;
+    border:none;
+    border-radius:12px;
+    padding:15px 10px;
+    background:var(--red);
+    color:var(--paper);
+    font-family:var(--font-display);
+    font-size:18px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    box-shadow:0 4px 0 var(--red-dim);
+    transform:translateY(0);
+    transition:transform .05s, box-shadow .05s;
+  }
+  .btn-clap:active{ transform:translateY(4px); box-shadow:0 0 0 var(--red-dim); }
+
+  .encourage{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--green-on);
+    text-align:center;
+    min-height:16px;
+    opacity:0;
+    transition:opacity .3s;
+  }
+  .encourage.show{ opacity:1; }
+
+  /* ---------- CAMERA PANEL ---------- */
+  #panel-camera{ grid-area:camera; }
+  .cam-frame{
+    position:relative;
+    flex:1;
+    min-height:220px;
+    border-radius:12px;
+    overflow:hidden;
+    background:#000;
+    border:1px solid var(--ink-600);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .cam-frame video{
+    width:100%; height:100%;
+    object-fit:cover;
+    background:#000;
+    transition:filter .15s;
+  }
+  .cam-placeholder{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:12px; text-align:center; padding:20px;
+  }
+  .cam-placeholder .icon{ font-size:40px; }
+  .cam-placeholder p{ font-size:13px; color:var(--paper-dim); max-width:260px; margin:0; }
+  .btn-primary{
+    background:var(--yellow);
+    color:var(--ink-900);
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    box-shadow:0 3px 0 var(--yellow-dim);
+  }
+  .btn-primary:active{ transform:translateY(3px); box-shadow:none; }
+
+  .rec-indicator{
+    position:absolute; top:10px; left:10px;
+    display:flex; align-items:center; gap:6px;
+    background:rgba(16,17,22,.7);
+    padding:6px 10px;
+    border-radius:999px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    opacity:0;
+    transition:opacity .2s;
+  }
+  .rec-indicator.show{ opacity:1; }
+  .rec-dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--red);
+    animation:pulse 1s infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+
+  .filters-row{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .filter-btn{
+    flex:1;
+    min-width:90px;
+    background:var(--ink-700);
+    border:1px solid var(--ink-600);
+    color:var(--paper-dim);
+    padding:9px 6px;
+    border-radius:9px;
+    font-size:11.5px;
+    font-weight:600;
+    text-align:center;
+  }
+  .filter-btn.active{
+    background:var(--yellow);
+    color:var(--ink-900);
+    border-color:var(--yellow);
+  }
+
+  .cam-controls{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+    align-items:center;
+  }
+  .btn-rec{
+    flex:1;
+    border:none;
+    border-radius:12px;
+    padding:14px 10px;
+    background:var(--ink-700);
+    color:var(--paper);
+    font-family:var(--font-display);
+    font-size:16px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    border:2px solid var(--red);
+  }
+  .btn-rec .dot{ width:12px; height:12px; border-radius:50%; background:var(--red); }
+  .btn-rec.recording{ background:var(--red); border-color:var(--red); }
+  .btn-rec.recording .dot{ border-radius:3px; background:var(--paper); animation:none; }
+  .rec-timer{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--paper-dim);
+    width:52px;
+    text-align:center;
+  }
+
+  .download-link{
+    display:none;
+    margin-top:8px;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--yellow);
+    text-decoration:none;
+    border:1px dashed var(--yellow-dim);
+    padding:9px;
+    border-radius:9px;
+  }
+  .download-link.show{ display:block; }
+
+  /* ---------- DIARIO PANEL ---------- */
+  #panel-diario{ grid-area:diario; }
+  #diario-text{
+    width:100%;
+    flex:0 0 110px;
+    background:var(--ink-700);
+    border:1px solid var(--ink-600);
+    border-radius:9px;
+    color:var(--paper);
+    padding:10px 12px;
+    font-size:14px;
+    resize:none;
+    outline:none;
+    line-height:1.4;
+  }
+  #diario-text:focus{ border-color:var(--yellow); }
+  .btn-save{
+    margin-top:8px;
+    background:var(--ink-700);
+    color:var(--paper);
+    border:1px solid var(--yellow-dim);
+    padding:10px;
+    border-radius:9px;
+    font-weight:600;
+    font-size:13px;
+  }
+  .btn-save.saved{ border-color:var(--green-on); color:var(--green-on); }
+
+  .diario-list{
+    margin-top:12px;
+    overflow-y:auto;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding-right:2px;
+  }
+  .diario-entry{
+    background:var(--ink-700);
+    border-left:3px solid var(--yellow);
+    border-radius:0 8px 8px 0;
+    padding:8px 10px;
+  }
+  .diario-entry .date{
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--yellow-dim);
+    color:var(--yellow);
+    opacity:.8;
+  }
+  .diario-entry p{ margin:3px 0 0; font-size:13px; line-height:1.35; color:var(--paper); }
+  .diario-empty{
+    font-size:12px;
+    color:var(--paper-dim);
+    text-align:center;
+    margin-top:20px;
+    font-style:italic;
+  }
+
+  /* scrollbars */
+  ::-webkit-scrollbar{ width:6px; }
+  ::-webkit-scrollbar-thumb{ background:var(--ink-600); border-radius:3px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="slate-bar">
+    <div class="title-wrap">
+      <div>
+        <h1>🎬 Pocket Director Studio</h1>
+        <div class="subtitle">La tua console da regista</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;padding-right:10px;">
+      <span class="badge">SET APERTO</span>
+    </div>
+  </header>
+
+  <main class="stage">
+
+    <!-- ================= CIAK DIGITALE ================= -->
+    <section class="panel" id="panel-ciak">
+      <div class="panel-head">
+        <div class="chip"></div>
+        <h2>Il Ciak Digitale</h2>
+      </div>
+
+      <div class="field">
+        <label for="in-titolo">Titolo del film</label>
+        <input id="in-titolo" type="text" placeholder="Es. Il Mistero del Giardino" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="in-scena">Scena</label>
+        <input id="in-scena" type="text" placeholder="Es. 4A" maxlength="10">
+      </div>
+      <div class="field">
+        <label for="in-ciak">Numero ciak</label>
+        <input id="in-ciak" type="number" placeholder="1" min="1">
+      </div>
+
+      <div class="clap-stage" id="clap-stage">
+        <svg class="clapboard" id="clap-svg" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="30" width="188" height="94" rx="6" fill="#1b1d24" stroke="#32353f" stroke-width="2"/>
+          <g id="clap-stripes-base">
+            <rect x="6" y="30" width="188" height="20" fill="url(#stripesA)"/>
+          </g>
+          <g class="clap-top" id="clap-top">
+            <rect x="6" y="6" width="188" height="24" rx="4" fill="url(#stripesA)" stroke="#101116" stroke-width="2"/>
+          </g>
+          <defs>
+            <pattern id="stripesA" width="20" height="20" patternTransform="rotate(-40)" patternUnits="userSpaceOnUse">
+              <rect width="20" height="20" fill="#101116"/>
+              <rect width="10" height="20" fill="#ffc82c"/>
+            </pattern>
+          </defs>
+          <text x="100" y="72" text-anchor="middle" fill="#f3efe4" font-family="'JetBrains Mono', monospace" font-size="11" id="clap-txt-title">titolo…</text>
+          <text x="100" y="96" text-anchor="middle" fill="#c9c5b8" font-family="'JetBrains Mono', monospace" font-size="10" id="clap-txt-scene">scena — · ciak —</text>
+        </svg>
+        <div class="clap-readout" id="clap-readout">Pronta a girare? 🎥</div>
+      </div>
+
+      <button class="btn-clap" id="btn-clap">🎬 Batti il ciak!</button>
+      <div class="encourage" id="clap-encourage">Ciak, si gira! ✨</div>
+    </section>
+
+    <!-- ================= CONSOLE DI REGIA ================= -->
+    <section class="panel" id="panel-camera">
+      <div class="panel-head">
+        <div class="chip"></div>
+        <h2>Console di Regia</h2>
+        <span class="hint" id="rec-timer-top"></span>
+      </div>
+
+      <div class="cam-frame" id="cam-frame">
+        <video id="cam-video" playsinline autoplay muted></video>
+        <div class="rec-indicator" id="rec-indicator"><span class="rec-dot"></span> REC</div>
+        <div class="cam-placeholder" id="cam-placeholder">
+          <div class="icon">🎥</div>
+          <p>Accendi la telecamera per inquadrare la tua prossima inquadratura da protagonista!</p>
+          <button class="btn-primary" id="btn-cam-start">Attiva fotocamera</button>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <button class="filter-btn active" data-filter="none">Normale</button>
+        <button class="filter-btn" data-filter="grayscale(1) contrast(1.05)">B/N Classic</button>
+        <button class="filter-btn" data-filter="sepia(0.75) saturate(1.3) contrast(1.05)">Seppia Vintage</button>
+        <button class="filter-btn" data-filter="grayscale(1) contrast(1.9) brightness(0.92)">Noir Alto Contr.</button>
+      </div>
+
+      <div class="cam-controls">
+        <button class="btn-rec" id="btn-rec" disabled><span class="dot"></span> <span id="rec-label">REC</span></button>
+        <div class="rec-timer" id="rec-timer">00:00</div>
+      </div>
+      <a class="download-link" id="download-link" download>⬇️ Scarica la tua ripresa</a>
+    </section>
+
+    <!-- ================= DIARIO DEL REGISTA ================= -->
+    <section class="panel" id="panel-diario">
+      <div class="panel-head">
+        <div class="chip"></div>
+        <h2>Diario del Regista</h2>
+      </div>
+      <textarea id="diario-text" placeholder="Come è andata oggi sul set? Scrivi qui le tue idee, i tuoi appunti e i tuoi sogni da regista..."></textarea>
+      <button class="btn-save" id="btn-save">📝 Salva il pensiero di oggi</button>
+      <div class="diario-list" id="diario-list">
+        <p class="diario-empty" id="diario-empty">Il tuo diario è ancora vuoto. Scrivi il tuo primo pensiero da regista!</p>
+      </div>
+    </section>
+
+  </main>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     1) IL CIAK DIGITALE
+  ========================================================= */
+  const inTitolo = document.getElementById('in-titolo');
+  const inScena  = document.getElementById('in-scena');
+  const inCiak   = document.getElementById('in-ciak');
+  const btnClap  = document.getElementById('btn-clap');
+  const clapStage= document.getElementById('clap-stage');
+  const clapReadout = document.getElementById('clap-readout');
+  const encourageEl = document.getElementById('clap-encourage');
+  const clapTxtTitle = document.getElementById('clap-txt-title');
+  const clapTxtScene = document.getElementById('clap-txt-scene');
+
+  const encouragements = [
+    "Ciak, si gira! ✨", "Ottimo ritmo, regista! 🎬", "Che ciak perfetto! 👏",
+    "Il set è tuo! 🌟", "Azione da vera professionista! 🎥", "Scena catturata! 🍿"
+  ];
+
+  function updateClapText(){
+    const t = inTitolo.value.trim() || 'senza titolo';
+    const s = inScena.value.trim() || '—';
+    const c = inCiak.value.trim() || '—';
+    clapTxtTitle.textContent = t.length > 22 ? t.slice(0,21) + '…' : t;
+    clapTxtScene.textContent = `scena ${s} · ciak ${c}`;
+  }
+  [inTitolo, inScena, inCiak].forEach(el => el.addEventListener('input', updateClapText));
+  updateClapText();
+
+  // Web Audio API: synthesize a dry "clack" sound, no external files needed
+  let audioCtx = null;
+  function playClapSound(){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtx;
+      const now = ctx.currentTime;
+
+      // short noise burst for the "crack"
+      const bufferSize = ctx.sampleRate * 0.08;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){
+        data[i] = (Math.random()*2-1) * Math.pow(1 - i/bufferSize, 3);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const bandpass = ctx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.value = 2200;
+      bandpass.Q.value = 0.7;
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(1, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+      noise.connect(bandpass).connect(noiseGain).connect(ctx.destination);
+
+      // low thump for body
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.06);
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(0.5, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(oscGain).connect(ctx.destination);
+
+      noise.start(now); noise.stop(now + 0.09);
+      osc.start(now); osc.stop(now + 0.08);
+    }catch(e){ /* audio not available, animation still works */ }
+  }
+
+  let encourageTimeout;
+  btnClap.addEventListener('click', () => {
+    updateClapText();
+    playClapSound();
+    clapStage.classList.remove('recover');
+    clapStage.classList.add('snap');
+    if (navigator.vibrate) navigator.vibrate(25);
+
+    setTimeout(() => {
+      clapStage.classList.remove('snap');
+      clapStage.classList.add('recover');
+    }, 110);
+
+    const s = inScena.value.trim() || '—';
+    const c = inCiak.value.trim() || '—';
+    clapReadout.innerHTML = `Scena <b>${escapeHtml(s)}</b> · Ciak <b>${escapeHtml(c)}</b> registrato!`;
+
+    clearTimeout(encourageTimeout);
+    encourageEl.textContent = encouragements[Math.floor(Math.random()*encouragements.length)];
+    encourageEl.classList.add('show');
+    encourageTimeout = setTimeout(() => encourageEl.classList.remove('show'), 2200);
+
+    // auto-increment ciak number for the next take
+    if (inCiak.value !== '' && !isNaN(parseInt(inCiak.value,10))){
+      inCiak.value = parseInt(inCiak.value,10) + 1;
+      updateClapText();
+    }
+  });
+
+  function escapeHtml(str){
+    return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  /* =========================================================
+     2) CONSOLE DI REGIA — FOTOCAMERA
+  ========================================================= */
+  const video = document.getElementById('cam-video');
+  const camPlaceholder = document.getElementById('cam-placeholder');
+  const btnCamStart = document.getElementById('btn-cam-start');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const btnRec = document.getElementById('btn-rec');
+  const recLabel = document.getElementById('rec-label');
+  const recIndicator = document.getElementById('rec-indicator');
+  const recTimerEl = document.getElementById('rec-timer');
+  const recTimerTop = document.getElementById('rec-timer-top');
+  const downloadLink = document.getElementById('download-link');
+
+  let mediaStream = null;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recTimerInterval = null;
+  let recSeconds = 0;
+
+  async function startCamera(){
+    try{
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: true
+      });
+      video.srcObject = mediaStream;
+      camPlaceholder.style.display = 'none';
+      btnRec.disabled = false;
+    }catch(err){
+      camPlaceholder.innerHTML = `
+        <div class="icon">🚫</div>
+        <p>Non riesco ad accendere la fotocamera. Controlla di aver dato il permesso nelle impostazioni di Safari/iPad e riprova.</p>
+        <button class="btn-primary" id="btn-cam-retry">Riprova</button>`;
+      document.getElementById('btn-cam-retry').addEventListener('click', startCamera);
+      console.warn('Camera error:', err);
+    }
+  }
+  btnCamStart.addEventListener('click', startCamera);
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      video.style.filter = btn.dataset.filter === 'none' ? '' : btn.dataset.filter;
+    });
+  });
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+  function updateRecTimerDisplay(){
+    const m = Math.floor(recSeconds/60), s = recSeconds%60;
+    const txt = `${pad(m)}:${pad(s)}`;
+    recTimerEl.textContent = txt;
+    recTimerTop.textContent = recSeconds > 0 ? `● ${txt}` : '';
+  }
+
+  function pickMimeType(){
+    const candidates = ['video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    for (const c of candidates){
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c;
+    }
+    return '';
+  }
+
+  function startRecording(){
+    if (!mediaStream) return;
+    recordedChunks = [];
+    const mimeType = pickMimeType();
+    try{
+      mediaRecorder = mimeType ? new MediaRecorder(mediaStream, { mimeType }) : new MediaRecorder(mediaStream);
+    }catch(e){
+      mediaRecorder = new MediaRecorder(mediaStream);
+    }
+    mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const ext = (mediaRecorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+      const nameBase = (inTitolo.value.trim() || 'ripresa').replace(/[^a-z0-9]+/gi,'_');
+      downloadLink.href = url;
+      downloadLink.download = `${nameBase}_scena${inScena.value||'X'}_ciak${inCiak.value||'1'}.${ext}`;
+      downloadLink.classList.add('show');
+    };
+    mediaRecorder.start();
+    recSeconds = 0;
+    updateRecTimerDisplay();
+    recTimerInterval = setInterval(() => { recSeconds++; updateRecTimerDisplay(); }, 1000);
+
+    btnRec.classList.add('recording');
+    recLabel.textContent = 'STOP';
+    recIndicator.classList.add('show');
+    downloadLink.classList.remove('show');
+  }
+
+  function stopRecording(){
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    clearInterval(recTimerInterval);
+    btnRec.classList.remove('recording');
+    recLabel.textContent = 'REC';
+    recIndicator.classList.remove('show');
+  }
+
+  btnRec.addEventListener('click', () => {
+    if (btnRec.classList.contains('recording')) stopRecording();
+    else startRecording();
+  });
+
+  /* =========================================================
+     3) IL DIARIO DEL REGISTA
+  ========================================================= */
+  const diarioText = document.getElementById('diario-text');
+  const btnSave = document.getElementById('btn-save');
+  const diarioList = document.getElementById('diario-list');
+  const diarioEmpty = document.getElementById('diario-empty');
+  const STORAGE_KEY = 'pocket-director-diario';
+
+  function loadEntries(){
+    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch(e){ return []; }
+  }
+  function saveEntries(entries){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }catch(e){}
+  }
+  function renderEntries(){
+    const entries = loadEntries();
+    diarioList.querySelectorAll('.diario-entry').forEach(n => n.remove());
+    diarioEmpty.style.display = entries.length ? 'none' : 'block';
+    entries.slice().reverse().forEach(entry => {
+      const div = document.createElement('div');
+      div.className = 'diario-entry';
+      const date = document.createElement('div');
+      date.className = 'date';
+      date.textContent = entry.date;
+      const p = document.createElement('p');
+      p.textContent = entry.text;
+      div.appendChild(date);
+      div.appendChild(p);
+      diarioList.appendChild(div);
+    });
+  }
+
+  btnSave.addEventListener('click', () => {
+    const text = diarioText.value.trim();
+    if (!text) return;
+    const entries = loadEntries();
+    const now = new Date();
+    entries.push({
+      date: now.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' }) + ' · ' +
+            now.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' }),
+      text
+    });
+    saveEntries(entries);
+    renderEntries();
+    diarioText.value = '';
+    btnSave.textContent = '✅ Salvato!';
+    btnSave.classList.add('saved');
+    setTimeout(() => { btnSave.textContent = '📝 Salva il pensiero di oggi'; btnSave.classList.remove('saved'); }, 1500);
+  });
+
+  renderEntries();
+
+})();
+</script>
+</body>
+</html>
